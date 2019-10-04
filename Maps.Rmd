@@ -14,19 +14,12 @@ require(readxl)
 require(stringr)
 require(geojsonio)
 library(RColorBrewer)
-```
-
-
-##
-
+library(tidycensus)
+library(tigris)
 
 ```
-
-
-)
-
 ```
-
+```
 # Load Data for Point Base Map: Mobile Home Data
 
 ```{r}
@@ -77,6 +70,8 @@ basemap_points %>%
 
 # Public Transit Data from DHS
 
+Plot is limited to those Traffic Authorities that operate under the authroirt of NY 
+
 ```{r}
 # LINE PLOT
 
@@ -84,21 +79,20 @@ basemap_points %>%
 public_transit <- readOGR("Public_Transit_Routes.shp")
 
 # Limit to NY Transit Systems
-ne_lines <- c("METRO-NORTH COMMUTER RAILROAD COMPANY, DBA: MTA METRO-NORTH RAILROAD",  
+ny_lines <- c("METRO-NORTH COMMUTER RAILROAD COMPANY, DBA: MTA METRO-NORTH RAILROAD",  
               "MTA LONG ISLAND RAIL ROAD",                                                                  
               "MTA NEW YORK CITY TRANSIT",                                                                  
               "NIAGARA FRONTIER TRANSPORTATION AUTHORITY",                                                  
               "PORT AUTHORITY OF NEW YORK AND NEW JERSEY",                                                  
               "PORT AUTHORITY TRANS-HUDSON CORPORATION",                                                    
-              "PORT AUTHORITY TRANSIT CORPORATION",                                                     
               "STATEN ISLAND RAPID TRANSIT OPERATING AUTHORITY, DBA: MTA STATEN ISLAND RAILWAY")
 
 public_transit_ne <- subset(public_transit, public_transit$SYS_AGENCY %in% ne_lines)
 
 #Create Color Pallette
 
-cols <- colorRampPalette(brewer.pal(8,"Dark2"))(length(ne_lines))
-pal2 <-colorFactor(cols, domain = ne_lines)
+cols <- colorRampPalette(brewer.pal(8,"Dark2"))(length(ny_lines))
+pal2 <-colorFactor(cols, domain = ny_lines)
 
 leaflet(data = public_transit_ne) %>%
   # Basemaps
@@ -121,4 +115,62 @@ leaflet(data = public_transit_ne) %>%
 
 ```
 
+# Polygon Map with 2 Layers 
+
+#Prep the data and add shapefile 
+
+```{r}
+# Source: https://walkerke.github.io/tidycensus/reference/load_variables.html
+# Get the data from the census
+
+v17 <- load_variables(2017, "acs5", cache = TRUE)
+
+# Vehicle Ownership 
+ny_data_car <- get_acs(geography = "county", 
+                       variables = c("B08541_006"),
+                       state = 36,
+                       geometry = FALSE)
+# Population
+ny_data_pop <- get_acs(geography = "county", 
+                       variables = c("B01003_001"),
+                       state = 36,
+                       geometry = FALSE)
+
+# Get NYS county shapefile 
+ny_counties <- counties(state = 36)
+
+
+# Merge Car and Population data files 
+
+poly_map_data <- merge(ny_data_car, ny_data_pop, by = c("GEOID", "NAME"), sort = FALSE)
+
+# ny_counties@data<- merge(ny_counties@data, poly_map_data, by = "GEOID", sort = FALSE)
+
+#Merge Car and Shapefile data
+cars_ny <- merge(ny_counties, ny_data_car, by = c("GEOID"))
+
+
+# Recall Varible x is car data and variable.y is population data 
+
+
+```
+# Time to Plot! Polygon Map
+
+```{r}
+
+# Solution
+# pal <- colorNumeric(
+#   palette = "Blues",
+#   domain = ny_counties$variable.x)
+
+leaflet(data = cars_ny) %>%
+  addTiles() %>%
+  addProviderTiles("Esri.WorldGrayCanvas", group = "WorldGrayCanvas") %>%
+  addProviderTiles("CartoDB.Positron", group = "Positron") %>%
+      addLayersControl(
+    baseGroups = c("WorldGrayCanvas", "Positron"),
+    options = layersControlOptions(collapsed = FALSE)) %>%
+    fitBounds(-79, 45, -72, 39) # Fit to Northeast
+
+```
 
