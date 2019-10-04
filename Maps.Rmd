@@ -52,7 +52,7 @@ basemap_points <-leaflet(mobile_home_ny) %>%
   # Basemaps
   addTiles()%>%
   addProviderTiles("Esri.WorldPhysical", group = "WorldPhysical") %>%
-  addCircleMarkers(group = mobile_home_ny$SIZE, stroke = F, color = ~pal(SIZE), weight = 100,
+  addCircleMarkers(group = mobile_home_ny$SIZE, stroke = F, color = ~pal(SIZE), weight = 50,
                    fillOpacity = 0.5) %>%
     addLayersControl(
     baseGroups = c("OSM (default)", "WorldPhysical"),
@@ -87,7 +87,7 @@ ny_lines <- c("METRO-NORTH COMMUTER RAILROAD COMPANY, DBA: MTA METRO-NORTH RAILR
               "PORT AUTHORITY TRANS-HUDSON CORPORATION",                                                    
               "STATEN ISLAND RAPID TRANSIT OPERATING AUTHORITY, DBA: MTA STATEN ISLAND RAILWAY")
 
-public_transit_ne <- subset(public_transit, public_transit$SYS_AGENCY %in% ne_lines)
+public_transit_ne <- subset(public_transit, public_transit$SYS_AGENCY %in% ny_lines)
 
 #Create Color Pallette
 
@@ -107,8 +107,8 @@ leaflet(data = public_transit_ne) %>%
     # position = "bottomleft",
     options = layersControlOptions(collapsed = FALSE)) %>%
    addLegend("topright", pal = pal2, values = ~SYS_AGENCY,
-    title = "Public Transit Lines By System")  %>%
-    fitBounds(-79, 45, -72, 39) # Fit to Northeast
+    title = " New York Public Transit Lines By System")  %>%
+    fitBounds(-79, 48, -72, 39) # Fit to Northeast
 
 
                  
@@ -140,11 +140,11 @@ ny_data_pop <- get_acs(geography = "county",
 ny_counties <- counties(state = 36)
 
 
-# Merge Car and Population data files 
+# Merge Car and Population data files in a single file 
 
 poly_map_data <- merge(ny_data_car, ny_data_pop, by = c("GEOID", "NAME"), sort = FALSE)
 
-# ny_counties@data<- merge(ny_counties@data, poly_map_data, by = "GEOID", sort = FALSE)
+ny_counties@data<- merge(ny_counties@data, poly_map_data, by = c("GEOID"), sort = FALSE)
 
 #Merge Car and Shapefile data
 cars_ny <- merge(ny_counties, ny_data_car, by = c("GEOID"))
@@ -158,19 +158,48 @@ cars_ny <- merge(ny_counties, ny_data_car, by = c("GEOID"))
 
 ```{r}
 
-# Solution
-# pal <- colorNumeric(
-#   palette = "Blues",
-#   domain = ny_counties$variable.x)
+# Palette for Number of Cars 
+pal_car <- colorQuantile(
+  palette = "Reds",
+  na.color = "#808080",
+  domain = ny_counties$estimate.x, n = 5)  # of Cars 
 
-leaflet(data = cars_ny) %>%
+# Palette for Population
+pal_ppl <- colorNumeric(
+  palette = "Purples",
+  na.color = "#808080",
+  domain = ny_counties$estimate.x)  # of Cars 
+
+basemap_poly <- leaflet(ny_counties) %>%
   addTiles() %>%
   addProviderTiles("Esri.WorldGrayCanvas", group = "WorldGrayCanvas") %>%
   addProviderTiles("CartoDB.Positron", group = "Positron") %>%
-      addLayersControl(
-    baseGroups = c("WorldGrayCanvas", "Positron"),
-    options = layersControlOptions(collapsed = FALSE)) %>%
     fitBounds(-79, 45, -72, 39) # Fit to Northeast
+
+basemap_poly %>%
+  addPolygons(
+        color = ~pal_car(estimate.x),
+        stroke = FALSE,
+        weight = 2,
+        opacity = 1,
+        dashArray = "3",
+        fillOpacity = 0.7, 
+        group = "Number of Cars") %>%
+  addCircleMarkers(
+        stroke = FALSE,
+        weight = 10,
+        opacity = .5,
+        fillOpacity = 0.7, 
+        radius = estimate.y,
+        group = "Population")%>%
+  hideGroup("Population")%>%
+addLayersControl(
+    baseGroups = c("WorldGrayCanvas", "Positron"),
+    overlayGroups = c("Number of Cars", "Population"),
+    options = layersControlOptions(collapsed = FALSE)) 
+
+
+  
 
 ```
 
