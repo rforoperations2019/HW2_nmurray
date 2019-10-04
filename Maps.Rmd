@@ -17,32 +17,69 @@ require(stringr)
 
 ##
 
-# Blank map with provider selector
 
-```{r, controls}
-basemap <-leaflet() %>%
-  # Basemaps
-  addTiles(group = "OSM (default)")
-
-basemap
 ```
 
-## R Markdown
+## Read in Shapefile 
+# Load Shapefile for Mobile Home Data 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r}
 
-```{r cars}
-summary(cars)
+dir()
+# dir("Mobile_Home_Parks.cpg", "Mobile_Home_Parks.dbf", "Mobile_Home_Parks.prj", "Mobile_Home_Parks.shp", "Mobile_Home_Parks.shx", "Mobile_Home_Parks.xml")
+
+mobile_homes <- read.csv("Mobile_Home_Parks.xml")
+
+mobile_homes_shp <- readOGR("Mobile_Home_Parks.shp")
+
 ```
+#  Load Data for Point Base Map: Mobile Home Data
+```{r}
+# Load mobile home data
 
-## Including Plots
+mobile_home_df <- read.csv("Mobile_Home_Parks.csv")
 
-You can also embed plots, for example:
+#Subset NY Data 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+mobile_home_ny <- with(mobile_home_df, subset(mobile_home_df$STATE, STATE == "NY"))
+
+#Data Exploration
+
+dim(mobile_home_df)
+names(mobile_home_df)
+colSums(is.na(mobile_home_df))
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+# Marker Point Map
+```{
+
+```{r, controls}
+basemap_points <-leaflet(mobile_home_df) %>%
+  # Basemaps
+  addTiles()%>%
+  addProviderTiles("Esri.WorldPhysical", group = "WorldPhysical") %>%
+  addMarkers() %>%
+    addLayersControl(
+    baseGroups = c("OSM (default)", "WorldPhysical"),
+    overlayGroups = c(levels(mobile_home_df$NAICS_DESC)),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+basemap_points %>% 
+  fitBounds(-120, 30, -70, 43) # Fit to us
+  
+
+```
+
+
+```{r}
+
+
+basemap_points %>%
+  addTiles(data = mobile_home_df)
+
+```
+
+
