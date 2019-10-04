@@ -12,6 +12,7 @@ require(leaflet.extras)
 require(dplyr)
 require(readxl)
 require(stringr)
+require(geojsonio)
 ```
 
 
@@ -61,34 +62,85 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 # Marker Point Map
 ```{
 
-```{r, controls}
-
 ```{r}
-
+```{r}
+# Load mobile home data
 pal <- colorFactor(c("mediumturquoise",  "purple" , "cadetblue4" ), domain = c("LARGE (>100)", "MEDIUM (51-100)","SMALL (<50)"))
 
 basemap_points <-leaflet(mobile_home_ny) %>%
   # Basemaps
   addTiles()%>%
   addProviderTiles("Esri.WorldPhysical", group = "WorldPhysical") %>%
-  addCircleMarkers(color = ~pal(SIZE),
-    stroke = FALSE, fillOpacity = 0.5) %>%
+  addCircleMarkers(group = mobile_home_ny$SIZE, stroke = F, color = ~pal(SIZE), weight = 100,
+                   fillOpacity = 0.5) %>%
     addLayersControl(
     baseGroups = c("OSM (default)", "WorldPhysical"),
-    options = layersControlOptions(collapsed = FALSE)
-  )
-basemap_points %>% 
-  fitBounds(-78, 45, -72, 42) # Fit to us
+    overlayGroups = c(levels(mobile_home_ny$SIZE)),
+    options = layersControlOptions(collapsed = FALSE))%>%
+   addLegend("bottomright", pal = pal, values = ~SIZE,
+    title = "Size of Mobile Home Community")
 
+basemap_points %>% 
+  fitBounds(-78, 45, -72, 40) # Fit to NY
 
 ```
 
+# Data from : https://hifld-geoplatform.opendata.arcgis.com/datasets/public-transit-routes/data?geometry=-104.352%2C31.109%2C-57.023%2C43.309
+
+# Public Transit Data from DHS
 
 ```{r}
+# LINE PLOT
+
+# Load Shape File 
+public_transit <- readOGR("Public_Transit_Routes.shp")
+
+# Limit to Northeastern Transit Systems
+
+public_transit_ne <- subset(public_transit, public_transit$SYS_AGENCY %in% c(
+              "CAMBRIA COUNTY TRANSIT AUTHORITY",                                                                 
+              "CONNECTICUT DEPARTMENT OF TRANSPORTATION, DBA: SHORE LINE EAST",
+              "METRO-NORTH COMMUTER RAILROAD COMPANY, DBA: MTA METRO-NORTH RAILROAD",  
+              "MTA LONG ISLAND RAIL ROAD",                                                                        
+              "MTA NEW YORK CITY TRANSIT",                                                                        
+              "NEW JERSEY TRANSIT CORPORATION",                                                                   
+              "NIAGARA FRONTIER TRANSPORTATION AUTHORITY",                                                        
+              "PORT AUTHORITY OF NEW YORK AND NEW JERSEY",                                                        
+              "PORT AUTHORITY TRANS-HUDSON CORPORATION",                                                          
+              "PORT AUTHORITY TRANSIT CORPORATION",                                                     
+              "STATEN ISLAND RAPID TRANSIT OPERATING AUTHORITY, DBA: MTA STATEN ISLAND RAILWAY"                  
+))
+
+#Create Color Pallette
 
 
-basemap_points %>%
-  addTiles(data = mobile_home_df)
+pal2 <-colorFactor(rainbow(12), domain = c("CAMBRIA COUNTY TRANSIT AUTHORITY",
+                                           "CONNECTICUT DEPARTMENT OF TRANSPORTATION, 
+                                           DBA: SHORE LINE EAST",
+                                           "METRO-NORTH COMMUTER RAILROAD COMPANY,
+                                           DBA: MTA METRO-NORTH RAILROAD",
+                                           "MTA LONG ISLAND RAIL ROAD","MTA NEW YORK CITY TRANSIT",
+                                           "NEW JERSEY TRANSIT CORPORATION",
+                                           "NIAGARA FRONTIER TRANSPORTATION AUTHORITY",
+                                           "PORT AUTHORITY OF NEW YORK AND NEW JERSEY",
+                                           "PORT AUTHORITY TRANS-HUDSON CORPORATION",
+                                           "PORT AUTHORITY TRANSIT CORPORATION",
+                                           "STATEN ISLAND RAPID TRANSIT OPERATING AUTHORITY,
+                                           DBA: MTA STATEN ISLAND RAILWAY"))
+
+leaflet(data = public_transit_ne) %>%
+  # Basemaps
+  addTiles() %>%
+  addProviderTiles("Esri.WorldGrayCanvas", group = "WorldGrayCanvas") %>%
+  addProviderTiles("Esri.WorldTerrain", group = "WorldTerrain") %>%
+  addPolylines(group = public_transit_ne$SYS_AGENCY, color = ~pal2(SYS_AGENCY))  %>%
+  # Layers control
+  addLayersControl(
+    baseGroups = c("WorldGrayCanvas", "WorldTerrain"),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+    fitBounds(-78, 45, -72, 40) # Fit to Northeast
+
 
 ```
 
