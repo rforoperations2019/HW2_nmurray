@@ -159,16 +159,16 @@ cars_ny <- merge(ny_counties, ny_data_car, by = c("GEOID"))
 ```{r}
 
 # Palette for Number of Cars 
-pal_car <- colorQuantile(
+pal_car <- colorNumeric(
   palette = "Reds",
   na.color = "#808080",
-  domain = ny_counties$estimate.x, n = 5)  # of Cars 
+  domain = ny_counties$estimate.x)  # of Cars 
 
 # Palette for Population
 pal_ppl <- colorNumeric(
   palette = "Purples",
   na.color = "#808080",
-  domain = ny_counties$estimate.x)  # of Cars 
+  domain = ny_counties$estimate.y)  # population 
 
 basemap_poly <- leaflet(ny_counties) %>%
   addTiles() %>%
@@ -185,18 +185,25 @@ basemap_poly %>%
         dashArray = "3",
         fillOpacity = 0.7, 
         group = "Number of Cars") %>%
-  addCircleMarkers(
+            addLegend(group = "Number of Cars", "bottomright", 
+                      pal = pal_car, values = ny_counties$estimate.x, 
+                      data = getMapData(basemap_poly),title = "Number of Cars") %>%
+  addPolygons(
+        color = ~pal_ppl(estimate.y),
         stroke = FALSE,
-        weight = 10,
-        opacity = .5,
-        fillOpacity = 0.7, 
-        radius = estimate.y,
-        group = "Population")%>%
-  hideGroup("Population")%>%
-addLayersControl(
-    baseGroups = c("WorldGrayCanvas", "Positron"),
-    overlayGroups = c("Number of Cars", "Population"),
-    options = layersControlOptions(collapsed = FALSE)) 
+        weight = 2,
+        opacity = 1,
+        dashArray = "3",
+        fillOpacity = 1, 
+        group = "Number of People")%>%
+            addLegend(group = "Number of People", "bottomright", 
+                      pal = pal_ppl, values = ny_counties$estimate.y, 
+                      data = getMapData(basemap_poly), title = "Number of People") %>%
+  addLayersControl(
+      baseGroups = c("WorldGrayCanvas", "Positron"),
+      overlayGroups = c("Number of Cars", "Number of People"),
+      options = layersControlOptions(collapsed = FALSE)) %>% 
+  hideGroup("Number of People")
 
 
   
