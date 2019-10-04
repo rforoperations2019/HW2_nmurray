@@ -1,8 +1,7 @@
 ---
-title: "Hw2"
+title: "HW3"
 author: "Nora Murray"
-date: "October 3, 2019"
-output: html_document
+date: "10/04/2019"
 ---
 ```{r setup, include=FALSE}
 require(rgdal)
@@ -21,8 +20,15 @@ library(tigris)
 ```
 ```
 # Load Data for Point Base Map: Mobile Home Data
+<br>
+source: https://hifld-geoplatform.opendata.arcgis.com/datasets/mobile-home-parks
+<br>
+<br>
+Using data from the US Department of Homeland Security, I have plotted locations of trailer parks across New York State. It appears most trailer parks have fewer than 50 trailers and are unsurprisingly concentrated Upstate.
+<br>
 
-```{r}
+```{r echo=FALSE, results='hide'}
+
 # Load mobile home data
 
 mobile_home_df <- data.frame(read.csv("Mobile_Home_Parks.csv"))
@@ -38,12 +44,10 @@ names(mobile_home_ny)
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
+<br>
 # Marker Point Map
-```{
+<br>
 
-```{r}
 ```{r}
 # Load mobile home data
 pal <- colorFactor(c("mediumturquoise",  "purple" , "cadetblue4" ), domain = c("LARGE (>100)", "MEDIUM (51-100)","SMALL (<50)"))
@@ -65,12 +69,15 @@ basemap_points %>%
   fitBounds(-78, 45, -72, 40) # Fit to NY
 
 ```
-
+<br>
 # Data from : https://hifld-geoplatform.opendata.arcgis.com/datasets/public-transit-routes/data?geometry=-104.352%2C31.109%2C-57.023%2C43.309
+<br>
 
-# Public Transit Data from DHS
+## Public Transit Data from DHS
+<br>
 
-Plot is limited to those Traffic Authorities that operate under the authroirt of NY 
+This plot shows the public transit systems and the system authority under which the transit system runs under. 
+Again, most of these transit systems are concentrated in New York City, with a very small transit line in Buffalo. 
 
 ```{r}
 # LINE PLOT
@@ -116,10 +123,19 @@ leaflet(data = public_transit_ne) %>%
 ```
 
 # Polygon Map with 2 Layers 
+<br>
+Given that we know there are more mobiles homes Upstate and more transit lines downstate, one might infer that Downstate is where the population center is.  
+<br>
+<br>
+If Downstate has more transit lines, do they use fewer cars or does the difference in population outweight this? 
+Based on this map, we conclude that Downstate has a much larger population and the different of population means more cares, irrespective of public transit. 
+<br>
 
 #Prep the data and add shapefile 
+<br>
+Data source: https://www.census.gov/data.html
 
-```{r}
+```{r, results='hide'}
 # Source: https://walkerke.github.io/tidycensus/reference/load_variables.html
 # Get the data from the census
 
@@ -154,7 +170,8 @@ cars_ny <- merge(ny_counties, ny_data_car, by = c("GEOID"))
 
 
 ```
-# Time to Plot! Polygon Map
+
+# Polygon Map with Number of Cars and Number of People
 
 ```{r}
 
