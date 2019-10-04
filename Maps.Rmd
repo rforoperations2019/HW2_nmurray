@@ -13,6 +13,7 @@ require(dplyr)
 require(readxl)
 require(stringr)
 require(geojsonio)
+library(RColorBrewer)
 ```
 
 
@@ -21,21 +22,8 @@ require(geojsonio)
 
 ```
 
-## Read in Shapefile 
-# Load Shapefile for Mobile Home Data 
 
-
-
-```{r}
-```{r setup, include=FALSE}
-
-
-dir()
-# dir("Mobile_Home_Parks.cpg", "Mobile_Home_Parks.dbf", "Mobile_Home_Parks.prj", "Mobile_Home_Parks.shp", "Mobile_Home_Parks.shx", "Mobile_Home_Parks.xml")
-
-mobile_homes <- read.csv("Mobile_Home_Parks.xml")
-
-mobile_homes_shp <- readOGR("Mobile_Home_Parks.shp")
+)
 
 ```
 
@@ -95,38 +83,22 @@ basemap_points %>%
 # Load Shape File 
 public_transit <- readOGR("Public_Transit_Routes.shp")
 
-# Limit to Northeastern Transit Systems
-
-public_transit_ne <- subset(public_transit, public_transit$SYS_AGENCY %in% c(
-              "CAMBRIA COUNTY TRANSIT AUTHORITY",                                                                 
-              "CONNECTICUT DEPARTMENT OF TRANSPORTATION, DBA: SHORE LINE EAST",
-              "METRO-NORTH COMMUTER RAILROAD COMPANY, DBA: MTA METRO-NORTH RAILROAD",  
-              "MTA LONG ISLAND RAIL ROAD",                                                                        
-              "MTA NEW YORK CITY TRANSIT",                                                                        
-              "NEW JERSEY TRANSIT CORPORATION",                                                                   
-              "NIAGARA FRONTIER TRANSPORTATION AUTHORITY",                                                        
-              "PORT AUTHORITY OF NEW YORK AND NEW JERSEY",                                                        
-              "PORT AUTHORITY TRANS-HUDSON CORPORATION",                                                          
+# Limit to NY Transit Systems
+ne_lines <- c("METRO-NORTH COMMUTER RAILROAD COMPANY, DBA: MTA METRO-NORTH RAILROAD",  
+              "MTA LONG ISLAND RAIL ROAD",                                                                  
+              "MTA NEW YORK CITY TRANSIT",                                                                  
+              "NIAGARA FRONTIER TRANSPORTATION AUTHORITY",                                                  
+              "PORT AUTHORITY OF NEW YORK AND NEW JERSEY",                                                  
+              "PORT AUTHORITY TRANS-HUDSON CORPORATION",                                                    
               "PORT AUTHORITY TRANSIT CORPORATION",                                                     
-              "STATEN ISLAND RAPID TRANSIT OPERATING AUTHORITY, DBA: MTA STATEN ISLAND RAILWAY"                  
-))
+              "STATEN ISLAND RAPID TRANSIT OPERATING AUTHORITY, DBA: MTA STATEN ISLAND RAILWAY")
+
+public_transit_ne <- subset(public_transit, public_transit$SYS_AGENCY %in% ne_lines)
 
 #Create Color Pallette
 
-
-pal2 <-colorFactor(rainbow(12), domain = c("CAMBRIA COUNTY TRANSIT AUTHORITY",
-                                           "CONNECTICUT DEPARTMENT OF TRANSPORTATION, 
-                                           DBA: SHORE LINE EAST",
-                                           "METRO-NORTH COMMUTER RAILROAD COMPANY,
-                                           DBA: MTA METRO-NORTH RAILROAD",
-                                           "MTA LONG ISLAND RAIL ROAD","MTA NEW YORK CITY TRANSIT",
-                                           "NEW JERSEY TRANSIT CORPORATION",
-                                           "NIAGARA FRONTIER TRANSPORTATION AUTHORITY",
-                                           "PORT AUTHORITY OF NEW YORK AND NEW JERSEY",
-                                           "PORT AUTHORITY TRANS-HUDSON CORPORATION",
-                                           "PORT AUTHORITY TRANSIT CORPORATION",
-                                           "STATEN ISLAND RAPID TRANSIT OPERATING AUTHORITY,
-                                           DBA: MTA STATEN ISLAND RAILWAY"))
+cols <- colorRampPalette(brewer.pal(8,"Dark2"))(length(ne_lines))
+pal2 <-colorFactor(cols, domain = ne_lines)
 
 leaflet(data = public_transit_ne) %>%
   # Basemaps
@@ -137,10 +109,15 @@ leaflet(data = public_transit_ne) %>%
   # Layers control
   addLayersControl(
     baseGroups = c("WorldGrayCanvas", "WorldTerrain"),
-    options = layersControlOptions(collapsed = FALSE)
-  ) %>%
-    fitBounds(-78, 45, -72, 40) # Fit to Northeast
+    # overlayGroups = ne_lines,
+    # position = "bottomleft",
+    options = layersControlOptions(collapsed = FALSE)) %>%
+   addLegend("topright", pal = pal2, values = ~SYS_AGENCY,
+    title = "Public Transit Lines By System")  %>%
+    fitBounds(-79, 45, -72, 39) # Fit to Northeast
 
+
+                 
 
 ```
 
