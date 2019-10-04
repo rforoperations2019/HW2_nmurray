@@ -24,7 +24,10 @@ require(stringr)
 # Load Shapefile for Mobile Home Data 
 
 
+
 ```{r}
+```{r setup, include=FALSE}
+
 
 dir()
 # dir("Mobile_Home_Parks.cpg", "Mobile_Home_Parks.dbf", "Mobile_Home_Parks.prj", "Mobile_Home_Parks.shp", "Mobile_Home_Parks.shx", "Mobile_Home_Parks.xml")
@@ -34,21 +37,23 @@ mobile_homes <- read.csv("Mobile_Home_Parks.xml")
 mobile_homes_shp <- readOGR("Mobile_Home_Parks.shp")
 
 ```
-#  Load Data for Point Base Map: Mobile Home Data
+
+# Load Data for Point Base Map: Mobile Home Data
+
 ```{r}
 # Load mobile home data
 
-mobile_home_df <- read.csv("Mobile_Home_Parks.csv")
+mobile_home_df <- data.frame(read.csv("Mobile_Home_Parks.csv"))
 
 #Subset NY Data 
 
-mobile_home_ny <- with(mobile_home_df, subset(mobile_home_df$STATE, STATE == "NY"))
+mobile_home_ny <- subset(mobile_home_df, STATE == "NY")
 
 #Data Exploration
 
-dim(mobile_home_df)
-names(mobile_home_df)
-colSums(is.na(mobile_home_df))
+dim(mobile_home_ny)
+names(mobile_home_ny)
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
@@ -57,19 +62,24 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 ```{
 
 ```{r, controls}
-basemap_points <-leaflet(mobile_home_df) %>%
+
+```{r}
+
+pal <- colorFactor(c("mediumturquoise",  "purple" , "cadetblue4" ), domain = c("LARGE (>100)", "MEDIUM (51-100)","SMALL (<50)"))
+
+basemap_points <-leaflet(mobile_home_ny) %>%
   # Basemaps
   addTiles()%>%
   addProviderTiles("Esri.WorldPhysical", group = "WorldPhysical") %>%
-  addMarkers() %>%
+  addCircleMarkers(color = ~pal(SIZE),
+    stroke = FALSE, fillOpacity = 0.5) %>%
     addLayersControl(
     baseGroups = c("OSM (default)", "WorldPhysical"),
-    overlayGroups = c(levels(mobile_home_df$NAICS_DESC)),
     options = layersControlOptions(collapsed = FALSE)
   )
 basemap_points %>% 
-  fitBounds(-120, 30, -70, 43) # Fit to us
-  
+  fitBounds(-78, 45, -72, 42) # Fit to us
+
 
 ```
 
